@@ -16,7 +16,7 @@ def model_var_type(value):
 def get_args(default_args=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--task-flag", type=str)
-
+    parser.add_argument("--index", type=int)
     # General Setting
     parser.add_argument("--batch-size", type=int, default=1, help="Per-GPU batch size")
     parser.add_argument('--seed', type=int, default=42, help="A seed for all the prompts.")
@@ -79,6 +79,7 @@ def get_args(default_args=None):
 
     # Basic Setting
     parser.add_argument("--prompt", type=str, default="一只小猫", help="The prompt for generating images.")
+    parser.add_argument("--caption-path", type=str, default="./coco/data/captions/caption.json", help="The path to the caption.csv for generating batch of images.")
     parser.add_argument("--model-root", type=str, default="ckpts",
                         help="Root path of all the models, including t2i model and dialoggen model.")
     parser.add_argument("--dit-weight", type=str, default=None,
@@ -123,6 +124,8 @@ def get_args(default_args=None):
     parser.add_argument("--enhance", action="store_true", help="Enhance prompt with mllm.")
     parser.add_argument("--no-enhance", dest="enhance", action="store_false")
     parser.add_argument("--load-4bit", help="load DialogGen model with 4bit quantization.", action="store_true")
+    parser.add_argument("--deepcache", help="Use DeepCache to accelerate.", action="store_true")
+    parser.add_argument("--save-dir", type=str, default="sample_results", help="dir to save the generated image")
     parser.set_defaults(enhance=True)
 
     # App
@@ -134,6 +137,8 @@ def get_args(default_args=None):
     # ========================================================================================================
 
     # Basic Setting
+    parser.add_argument("--cache-step", type=int, default=2)
+    parser.add_argument("--cache-at-branch", type=int, default=1)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--epochs", type=int, default=100)
     parser.add_argument("--max-training-steps", type=int, default=10_000_000)
@@ -220,6 +225,8 @@ def get_args(default_args=None):
                         help='Remote device for ZeRO-3 initialized parameters.')
     parser.add_argument('--zero-stage', type=int, default=1)
 
+     
+     
     args = parser.parse_args(default_args)
 
     return args

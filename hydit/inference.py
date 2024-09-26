@@ -18,6 +18,7 @@ from transformers.modeling_utils import logger as tf_logger
 from .constants import SAMPLER_FACTORY, NEGATIVE_PROMPT, TRT_MAX_WIDTH, TRT_MAX_HEIGHT, TRT_MAX_BATCH_SIZE
 from .diffusion.pipeline import StableDiffusionPipeline
 from .modules.models import HunYuanDiT, HUNYUAN_DIT_CONFIG
+from .modules.models_cache import HunYuanDiT_cache
 from .modules.posemb_layers import get_2d_rotary_pos_embed, get_fill_resize_and_crop
 from .modules.text_encoder import MT5Embedder
 from .utils.tools import set_seeds
@@ -205,12 +206,23 @@ class End2End(object):
         self.infer_mode = self.args.infer_mode
         if self.infer_mode in ['fa', 'torch']:
             # Build model structure
-            self.model = HunYuanDiT(self.args,
+            
+            if self.args.deepcache:
+                logger.info(f'using HunYuanDit_cache wit DeepCache')
+                self.model = HunYuanDiT_cache(self.args,
+                                    input_size=latent_size,
+                                    **model_config,
+                                    log_fn=logger.info,
+                                    cache_step = args.cache_step,
+                                    cache_at_branch = args.cache_at_branch
+                                    ).half().to(self.device)
+            else:
+                logger.info(f'using HunYuanDit without DeepCache')
+                self.model = HunYuanDiT(self.args,
                                     input_size=latent_size,
                                     **model_config,
                                     log_fn=logger.info,
                                     ).half().to(self.device)    # Force to use fp16
-
             # Load model checkpoint
             self.load_torch_weights()
 
@@ -381,7 +393,7 @@ class End2End(object):
             # We must force height and width to align to 16 and to be an integer.
             target_height = int((height // 16) * 16)
             target_width = int((width // 16) * 16)
-            logger.info(f"Align to 16: (height, width) = ({target_height}, {target_width})")
+            # logger.info(f"Align to 16: (height, width) = ({target_height}, {target_width})")
         elif self.infer_mode == 'trt':
             target_width, target_height = get_standard_shape(width, height)
             logger.info(f"Align to standard shape: (height, width) = ({target_height}, {target_width})")
@@ -436,17 +448,17 @@ class End2End(object):
 
         # ========================================================================
         start_time = time.time()
-        logger.debug(f"""
-                       prompt: {user_prompt}
-              enhanced prompt: {enhanced_prompt}
-                         seed: {seed}
-              (height, width): {(target_height, target_width)}
-              negative_prompt: {negative_prompt}
-                   batch_size: {batch_size}
-               guidance_scale: {guidance_scale}
-                  infer_steps: {infer_steps}
-              image_meta_size: {size_cond}
-        """)
+        # logger.debug(f"""
+        #                prompt: {user_prompt}
+        #       enhanced prompt: {enhanced_prompt}
+        #                  seed: {seed}
+        #       (height, width): {(target_height, target_width)}
+        #       negative_prompt: {negative_prompt}
+        #            batch_size: {batch_size}
+        #        guidance_scale: {guidance_scale}
+        #           infer_steps: {infer_steps}
+        #       image_meta_size: {size_cond}
+        # """)
         reso = f'{target_height}x{target_width}'
         if reso in self.freqs_cis_img:
             freqs_cis_img = self.freqs_cis_img[reso]
@@ -473,7 +485,7 @@ class End2End(object):
             learn_sigma=self.args.learn_sigma,
         )[0]
         gen_time = time.time() - start_time
-        logger.debug(f"Success, time: {gen_time}")
+        # logger.debug(f"Success, time: {gen_time}")
 
         return {
             'images': samples,
