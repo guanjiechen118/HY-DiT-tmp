@@ -137,3 +137,7 @@ trt/activate.sh
 trt/deactivate.sh
 *.onnx
 ckpts/
+coco/data
+coco/sample_results
+**sample_results/
+coco-script
