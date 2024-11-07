@@ -41,7 +41,7 @@ if __name__ == "__main__":
     pbar = tqdm.tqdm(len(captions))
     for caption in captions:
         index = args.index
-        if not caption_id % 2 == index:
+        if not caption_id % 8 == index:
             caption_id += 1
             continue
         save_dir = args.save_dir

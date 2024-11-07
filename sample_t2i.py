@@ -44,17 +44,17 @@ if __name__ == "__main__":
     logger.info("Generating images...")
     height, width = args.image_size
     results = gen.predict(args.prompt,
-                          height=height,
-                          width=width,
-                          seed=args.seed,
-                          enhanced_prompt=enhanced_prompt,
-                          negative_prompt=args.negative,
-                          infer_steps=args.infer_steps,
-                          guidance_scale=args.cfg_scale,
-                          batch_size=args.batch_size,
-                          src_size_cond=args.size_cond,
-                          use_style_cond=args.use_style_cond,
-                          )
+                        height=height,
+                        width=width,
+                        seed=args.seed,
+                        enhanced_prompt=enhanced_prompt,
+                        negative_prompt=args.negative,
+                        infer_steps=args.infer_steps,
+                        guidance_scale=args.cfg_scale,
+                        batch_size=args.batch_size,
+                        src_size_cond=args.size_cond,
+                        use_style_cond=args.use_style_cond,
+                        )
     images = results['images']
 
     # Save images
